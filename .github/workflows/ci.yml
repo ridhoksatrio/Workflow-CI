@@ -1,0 +1,29 @@
+name: Machine Learning Workflow CI
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  train-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install Dependencies
+        run: |
+          pip install mlflow dagshub scikit-learn pandas numpy
+
+      - name: Run MLflow Project
+        env:
+          MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_USERNAME }}
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_PASSWORD }}
+        run: |
+          # Perintah untuk menjalankan MLflow Project tanpa membuat environment conda baru di runner
+          mlflow run MLProject_Folder/ -e main --no-conda
