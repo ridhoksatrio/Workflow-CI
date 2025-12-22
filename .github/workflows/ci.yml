@@ -17,13 +17,23 @@ jobs:
           python-version: '3.12'
 
       - name: Install Dependencies
-        run: |
-          pip install mlflow dagshub scikit-learn pandas numpy
+        run: pip install mlflow dagshub scikit-learn pandas numpy
 
       - name: Run MLflow Project
         env:
           MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_USERNAME }}
           MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_PASSWORD }}
         run: |
-          # Perintah untuk menjalankan MLflow Project tanpa membuat environment conda baru di runner
           mlflow run MLProject_Folder/ -e main --no-conda
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push Docker Image
+        run: |
+          # Ganti 'ridhoksatrio' dengan username Docker Hub Anda
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/spotify-model:latest ./MLProject_Folder
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/spotify-model:latest
