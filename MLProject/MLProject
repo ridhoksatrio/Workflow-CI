@@ -1,4 +1,4 @@
-name: Spotify_Automation_Project
+name: Spotify_Automation
 
 conda_env: conda.yaml
 
