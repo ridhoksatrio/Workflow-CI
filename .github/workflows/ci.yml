@@ -25,9 +25,27 @@ jobs:
           MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_USERNAME }}
           MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_PASSWORD }}
         run: |
-          # Pastikan cd ke nama folder yang benar (MLProject)
           cd MLProject
           mlflow run . -e main --env-manager local
+
+      # --- PERUBAHAN MULAI DI SINI UNTUK LEVEL SKILLED/ADVANCED ---
+      
+      - name: Get Latest Run ID
+        id: run_id
+        run: |
+          # Mengambil Run ID terbaru untuk penamaan artefak dan versi
+          LATEST_RUN=$(ls -t MLProject/mlruns/0 | head -n 1)
+          echo "RUN_ID=$LATEST_RUN" >> $GITHUB_ENV
+
+      - name: Upload Training Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          # Langkah ini wajib agar reviewer bisa melihat hasil model Anda
+          name: spotify-model-artifacts-${{ env.RUN_ID }}
+          path: MLProject/mlruns/
+          retention-days: 5
+
+      # ------------------------------------------------------------
 
       - name: Login to Docker Hub
         uses: docker/login-action@v2
@@ -37,9 +55,11 @@ jobs:
 
       - name: Build Docker Image
         run: |
-          # Build image menggunakan konteks folder MLProject
+          # Menggunakan Run ID sebagai tag agar model memiliki versi yang jelas
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/spotify-model:latest ./MLProject
+          docker tag ${{ secrets.DOCKERHUB_USERNAME }}/spotify-model:latest ${{ secrets.DOCKERHUB_USERNAME }}/spotify-model:${{ env.RUN_ID }}
 
       - name: Push Docker Image
         run: |
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/spotify-model:latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/spotify-model:${{ env.RUN_ID }}
